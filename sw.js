@@ -1,29 +1,14 @@
-const CACHE_NAME = 'app-pwa-v20260930-01';
-const CORE_ASSETS = [
+const CACHE_NAME = 'kirikomi-sunpo-unified-v1';
+const URLS_TO_CACHE = [
   './',
   './index.html',
-  './manifest.json',
-  './sw.js'
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS))
-  );
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    (async () => {
-      const keys = await caches.keys();
-      await Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      );
-      await self.clients.claim();
-    })()
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(URLS_TO_CACHE))
   );
 });
 
@@ -33,72 +18,22 @@ self.addEventListener('message', (event) => {
   }
 });
 
-function isSameOrigin(request) {
-  return new URL(request.url).origin === self.location.origin;
-}
-
-function isNavigationRequest(request) {
-  return request.mode === 'navigate';
-}
-
-function isCriticalAsset(request) {
-  const url = new URL(request.url);
-  return isSameOrigin(request) && (
-    url.pathname.endsWith('/index.html') ||
-    url.pathname.endsWith('/manifest.json') ||
-    url.pathname.endsWith('/sw.js') ||
-    url.pathname === '/'
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      )
+    ).then(() => self.clients.claim())
   );
-}
-
-function isStaticAsset(request) {
-  const url = new URL(request.url);
-  return isSameOrigin(request) && /\.(?:png|jpg|jpeg|webp|svg|gif|ico)$/.test(url.pathname);
-}
-
-async function networkFirst(request, fallbackPath = './index.html') {
-  const cache = await caches.open(CACHE_NAME);
-  try {
-    const response = await fetch(request, { cache: 'no-store' });
-    if (response && response.ok) {
-      cache.put(request, response.clone()).catch(() => {});
-    }
-    return response;
-  } catch (error) {
-    const cached = await cache.match(request);
-    if (cached) return cached;
-    return cache.match(fallbackPath);
-  }
-}
-
-async function cacheFirst(request) {
-  const cache = await caches.open(CACHE_NAME);
-  const cached = await cache.match(request);
-  if (cached) return cached;
-  const response = await fetch(request);
-  if (response && response.ok) {
-    cache.put(request, response.clone()).catch(() => {});
-  }
-  return response;
-}
+});
 
 self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  if (request.method !== 'GET') return;
-
-  if (!isSameOrigin(request)) {
-    return;
-  }
-
-  if (isNavigationRequest(request) || isCriticalAsset(request)) {
-    event.respondWith(networkFirst(request));
-    return;
-  }
-
-  if (isStaticAsset(request)) {
-    event.respondWith(cacheFirst(request));
-    return;
-  }
-
-  event.respondWith(networkFirst(request));
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
 });

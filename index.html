@@ -3,35 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>切込寸法計算 iPad 11インチ最適化版</title>
-    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <title>切込寸法計算 - KYOWA ROOF</title>
+
+    <!-- PWA設定 -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#000000">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="切込">
     <link rel="icon" type="image/png" href="./icon-192.png">
     <link rel="apple-touch-icon" href="./icon-180.png">
-    
+
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
     <style>
         :root {
             --theme-color: #ff9f0a;
             --ios-bg: #000000;
             --ios-card: #1c1c1e;
-            --ios-border: #2c2c2e;
+            --ios-border: #333333;
             --ios-orange: #ff9f0a;
             --ios-silver: #c7c7cc;
-            --ios-silver-dark: #8e8e93;
-            --unfocused-border: #3a3a3c;
+            --ios-silver-dark: #9a9a9e;
+            --label-gray: #b0b0b5;
+            --unfocused-border: #444446;
         }
 
         .mode-height { --theme-color: #e67600; --ios-orange: #e67600; }
         .mode-history { --theme-color: #0a84ff; --ios-orange: #0a84ff; }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-text-size-adjust: 100%; 
-            -webkit-tap-highlight-color: transparent; 
+        * {
+            box-sizing: border-box;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
         }
 
@@ -43,7 +47,6 @@
             color: #ffffff;
             min-height: 100vh;
             overflow-x: hidden;
-            overscroll-behavior: none;
         }
 
         body {
@@ -54,300 +57,551 @@
             padding-bottom: env(safe-area-inset-bottom);
         }
 
-        .main-container { 
-            width: 100%; 
-            max-width: 1194px; 
-            display: flex; 
-            flex-direction: column; 
-            flex-grow: 1; 
-            padding: 0 16px;
-        }
-
-        .app-top-bar { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 12px 8px 10px; 
-            width: 100%; 
-        }
-        .app-top-bar .title { 
-            font-size: 20px; 
-            font-weight: 700; 
-            color: #ffffff; 
-            letter-spacing: -0.01em;
-            display: inline-flex;
-            align-items: center;
-        }
-        .app-top-bar .company { 
-            font-size: 13px; 
-            font-weight: 600; 
-            color: var(--ios-silver); 
-            opacity: 0.85; 
-            letter-spacing: 0.05em;
-        }
-
-        .mode-toggle-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 7px 18px;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 700;
-            background: #242428;
-            color: #ffffff;
-            border: 1.5px solid #3a3a3c;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            user-select: none;
-        }
-        .mode-toggle-btn:active {
-            transform: scale(0.96);
-            background: #323236;
-        }
-        .mode-toggle-btn.in-history {
-            background: #172a40;
-            color: #5ac8fa;
-            border-color: #0a84ff;
-        }
-
-        .calc-split-layout,
-        .history-split-layout {
+        /* =========================================================
+           共通コンポーネント
+           ========================================================= */
+        .main-container {
             width: 100%;
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 18px;
-            align-items: start;
-            padding-bottom: 24px;
-        }
-
-        .split-pane {
+            max-width: 420px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            background: #141416;
-            border-radius: 20px;
-            padding: 16px;
-            border: 1px solid #2a2a2c;
+            flex-grow: 1;
         }
 
-        .pane-header-badge {
-            display: inline-flex;
+        .app-top-bar {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            font-size: 14px;
-            font-weight: 700;
-            padding: 4px 12px;
-            border-radius: 8px;
-            width: fit-content;
+            padding: 14px 12px 4px;
+            width: 100%;
         }
-        .badge-side { background: rgba(255, 159, 10, 0.15); color: #ff9f0a; border: 1px solid rgba(255, 159, 10, 0.35); }
-        .badge-height { background: rgba(230, 118, 0, 0.15); color: #ff9f0a; border: 1px solid rgba(230, 118, 0, 0.35); }
+        .app-top-bar .title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+        .app-top-bar .company {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--ios-silver);
+            opacity: 0.8;
+        }
 
-        .cell-grid { 
-            display: grid; 
-            grid-template-columns: repeat(6, 1fr); 
-            background: var(--ios-border); 
-            gap: 1px; 
-            border-radius: 14px 14px 0 0; 
-            overflow: hidden; 
-            border: 1px solid var(--ios-border); 
-            border-bottom: none; 
+        /* iPad用ヘッダートグルボタン（iPhoneでは非表示） */
+        .ipad-only-toggle {
+            display: none;
         }
-        .calc-cell { 
-            background: #19191b; 
-            padding: 8px 12px; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            position: relative; 
-            grid-column: span 3; 
-            border: 0.5px solid var(--unfocused-border); 
-            min-height: 64px; 
+
+        /* iPhone用3タブバー */
+        .tab-wrapper {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(15px);
+            padding: 8px 12px 6px;
+            display: flex;
+            justify-content: center;
+        }
+        .tab-container {
+            display: flex;
+            background: #2c2c2e;
+            width: 100%;
+            padding: 2px;
+            border-radius: 10px;
+            border: 1px solid #3a3a3c;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+        }
+        .tab-button {
+            flex: 1;
+            padding: 3px 0;
+            background: transparent;
+            color: var(--ios-silver-dark);
+            font-size: 15px;
+            font-weight: 500;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: 0.2s;
+            border: 2px solid transparent;
+            white-space: nowrap;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .tab-button.active {
+            background: #48484a;
+            color: var(--theme-color);
+            border-color: var(--theme-color);
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* ペイン見出し（iPhoneでは非表示、iPadで表示） */
+        .pane-top-header {
+            display: none;
+        }
+
+        /* 入力グリッド */
+        .cell-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            background: var(--ios-border);
+            gap: 1px;
+            margin: 0 12px 0;
+            border-radius: 16px 16px 0 0;
+            overflow: hidden;
+            border: 1px solid var(--ios-border);
+            border-bottom: none;
+        }
+        .calc-cell {
+            background: #121214;
+            padding: 4px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            grid-column: span 3;
+            border: 0.5px solid var(--unfocused-border);
+            min-height: 52px;
+            cursor: pointer;
+            -webkit-user-select: none;
+            user-select: none;
         }
         .span-2 { grid-column: span 2 !important; }
         .span-4 { grid-column: span 4 !important; }
-        .calc-cell.focused { 
-            background: #242428; 
-            box-shadow: inset 0 0 0 2.5px var(--ios-orange) !important; 
-            border-color: var(--ios-orange); 
-            z-index: 10; 
+        .calc-cell.focused {
+            background: #1c1c1e;
+            box-shadow: inset 0 0 0 1.5px var(--ios-orange) !important;
+            border-color: var(--ios-orange);
+            z-index: 10;
         }
-        .input-label-left { 
-            font-size: 13px; 
-            font-weight: 600; 
-            color: #d1d1d6; 
-            margin-bottom: 2px; 
+        .input-label-left {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--label-gray);
+            margin-bottom: 0px;
         }
-        .input-value { 
-            font-size: 32px; 
-            font-weight: 700; 
-            color: #ffffff; 
-            text-align: center; 
-            line-height: 1.1; 
+        .input-value {
+            font-size: 27px;
+            font-weight: 600;
+            color: #ffffff;
+            text-align: center;
+            line-height: 1;
             font-feature-settings: "tnum";
         }
-        .input-value-lg { font-size: 34px; }
+        .input-value-lg { font-size: 28px; }
 
-        .keypad-container { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 1px; 
-            background: var(--ios-border); 
-            border-radius: 0 0 14px 14px; 
-            overflow: hidden; 
-            border: 1px solid var(--ios-border); 
-        }
-        .keypad-row { 
-            display: grid; 
-            gap: 1px; 
-            background: var(--ios-border); 
-        }
-        .row-top { grid-template-columns: repeat(6, 1fr); }
-        .row-bottom { grid-template-columns: repeat(9, 1fr); }
-        
-        .key-btn { 
-            background: #222225; 
-            color: #ffffff; 
-            height: 56px; 
-            font-size: 22px; 
-            font-weight: 600; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            transition: background 0.1s, transform 0.05s; 
-            border: none; 
-            outline: none; 
-            padding: 0; 
-            user-select: none;
-        }
-        .key-btn:active { 
-            background: #3c3c40; 
-            transform: scale(0.97); 
+        /* 2行構成テンキー（iPhone: 5列 + 9列 / iPad: 6列 + 9列） */
+        .keypad-container {
+            padding: 0;
+            background: #151517;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin: 0 12px 12px;
+            border-radius: 0 0 16px 16px;
+            overflow: hidden;
+            border: 1px solid var(--ios-border);
+            border-top: none;
         }
 
-        .key-fn { height: 56px; font-size: 16px; font-weight: 700; }
-        .key-fn.clear-btn { background: #2c2c30; color: #f2f2f7; }
-        .key-fn.clear-btn:active { background: #44444a; }
-        .key-fn.save-btn { 
-            background: #3a2612; 
-            color: #ff9f0a; 
-            border: 1px solid rgba(255, 159, 10, 0.4); 
+        .keypad-row-1 {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0;
+            border-bottom: 1px solid #333;
         }
-        .key-fn.save-btn:active { background: #52361a; }
-        .key-fn.history-btn { 
-            background: #172a40; 
-            color: #5ac8fa; 
-            border: 1px solid rgba(10, 132, 255, 0.4); 
-        }
-        .key-fn.history-btn:active { background: #223c5b; }
 
-        .result-area { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 12px; 
-            margin-top: 4px; 
+        .keypad-row-2 {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 0;
         }
-        .dir-switch-bar { 
-            background-color: #1c1c1e; 
-            padding: 3px; 
-            border-radius: 10px; 
-            display: inline-flex; 
-            border: 1px solid #333;
-        }
-        .dir-button { 
-            font-size: 14px; 
-            color: #aeaeb2; 
-            padding: 8px 18px; 
-            border: 2px solid transparent; 
-            font-weight: 600; 
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        .dir-active { 
-            background-color: #3a3a3c; 
-            color: var(--theme-color); 
-            border-color: var(--theme-color); 
-        }
-        .preview-header-row {
-            height: 44px;
+
+        .key-btn {
+            background: #242426;
+            color: #ffffff;
+            height: 52px;
+            border-radius: 0;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+            -webkit-user-select: none;
+            user-select: none;
+            cursor: pointer;
+            position: relative;
+            border: none;
+            border-right: 1px solid #333;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.35);
+            transition: background-color 0.06s ease;
+            outline: none;
+            padding: 0;
+        }
+        .keypad-row-1 .key-btn:last-child,
+        .keypad-row-2 .key-btn:last-child {
+            border-right: none;
+        }
+        .key-btn:active {
+            background: #18181a;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+        }
+        .key-btn.gray-control {
+            background: #353538;
+            color: #e5e5ea;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -2px 0 rgba(0, 0, 0, 0.4);
+        }
+        .key-btn.gray-control:active {
+            background: #28282b;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7);
+        }
+        .key-btn.enter-key {
+            color: var(--ios-orange) !important;
+        }
+        .keypad-row-2 .key-btn {
+            font-size: 1.2rem;
+        }
+
+        /* iPad専用テンキーボタン（iPhoneでは非表示） */
+        .ipad-key-history {
+            display: none;
+        }
+        .label-ipad {
+            display: none;
+        }
+        .label-iphone {
+            display: inline;
+        }
+
+        /* 結果図面エリア */
+        .result-area { padding: 12px; }
+        .dir-switch-bar {
+            background-color: #1c1c1e;
+            padding: 2px;
+            border-radius: 8px;
+            display: inline-flex;
+        }
+        .dir-button {
+            font-size: 13px;
+            color: #aeaeb2;
+            padding: 6px 12px;
+            border: 2px solid transparent;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .dir-active {
+            background-color: #3a3a3c;
+            color: var(--theme-color);
+            border: 2px solid var(--theme-color);
+            border-radius: 6px;
+        }
+        .preview-header-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 4px;
         }
         .preview-header-row.placeholder {
-            visibility: hidden;
+            display: none;
         }
 
-        .history-view-container { 
-            background: #141416; 
-            border-radius: 20px; 
-            border: 1px solid #2a2a2c; 
-            overflow: hidden; 
-            box-shadow: 0 6px 24px rgba(0,0,0,0.5); 
-            padding: 16px;
+        /* 履歴画面 */
+        .history-view-container {
+            background: #000000;
+            margin: 0 12px 12px;
+            border-radius: 16px;
+            border: 0.5px solid var(--unfocused-border);
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
-        .history-label-main { font-size: 16px !important; font-weight: 700; color: #ffffff; }
-        .history-item { 
-            background: #242428; 
-            border: 1.5px solid #3a3a3c; 
-            margin-bottom: 10px; 
-            border-radius: 14px; 
-            padding: 12px 16px;
-            transition: all 0.15s; 
-            cursor: pointer; 
+        .history-section-content { padding: 14px 0 24px; }
+        .history-label-main { font-size: 14px !important; font-weight: 600; color: #ffffff; }
+        .history-label-sub { font-size: 13px !important; font-weight: 600; padding: 2px 10px; border-radius: 6px; }
+        .label-side { background: rgba(255, 159, 10, 0.15); color: #ff9f0a; }
+        .label-height { background: rgba(230, 118, 0, 0.15); color: #e67600; }
+        .history-cat-section { padding: 12px; }
+        .section-side { background: rgba(255, 159, 10, 0.03); }
+        .section-height { background: rgba(230, 118, 0, 0.03); }
+        .history-item {
+            background: #2c2c2e;
+            border: 1px solid #3a3a3c;
+            margin-bottom: 8px;
+            border-radius: 12px;
+            transition: all 0.1s;
+            cursor: pointer;
+            -webkit-user-select: none;
+            user-select: none;
         }
         .history-item.checked { border-color: var(--theme-color); }
-        .history-item.preview-active { 
-            border-color: #0a84ff !important; 
-            background: #2c2f38; 
-            box-shadow: 0 0 14px rgba(10, 132, 255, 0.35); 
+        .history-item.preview-active {
+            border-color: #0a84ff !important;
+            background: #3a3a3c;
+            box-shadow: 0 0 10px rgba(10, 132, 255, 0.3);
         }
 
-        #toast { 
-            position: fixed; 
-            top: 50%; 
-            left: 50%; 
-            transform: translate(-50%, -50%); 
-            background: rgba(10, 132, 255, 0.95); 
-            color: white; 
-            padding: 18px 36px; 
-            border-radius: 16px; 
-            font-size: 18px;
-            font-weight: 700; 
-            opacity: 0; 
-            z-index: 10000; 
-            transition: 0.25s ease; 
-            pointer-events: none; 
-            box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+        .padding-bottom { padding-bottom: 32px; }
+
+        #toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 132, 255, 0.95);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 14px;
+            font-weight: 600;
+            opacity: 0;
+            z-index: 10000;
+            transition: 0.25s ease;
+            pointer-events: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
         #toast.show { opacity: 1; }
         .hidden { display: none !important; }
 
-        @media (max-width: 820px) {
-            .calc-split-layout,
-            .history-split-layout {
-                grid-template-columns: 1fr;
+        /* =========================================================
+           iPadサイズ（768px以上）: 左右2画面同時表示モード
+           ========================================================= */
+        @media (min-width: 768px) {
+            html, body {
+                overscroll-behavior: none;
             }
+            .main-container {
+                max-width: 1194px;
+                padding: 0 16px;
+            }
+            .app-top-bar {
+                padding: 12px 8px 10px;
+            }
+            .app-top-bar .title {
+                font-size: 20px;
+                font-weight: 700;
+            }
+            .app-top-bar .company {
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+            /* iPad用トグルボタンを表示し、iPhone用タブバーを隠す */
+            .ipad-only-toggle {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 7px 18px;
+                border-radius: 12px;
+                font-size: 15px;
+                font-weight: 700;
+                background: #242428;
+                color: #ffffff;
+                border: 1.5px solid #3a3a3c;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                cursor: pointer;
+                transition: all 0.2s ease;
+                user-select: none;
+            }
+            .ipad-only-toggle:active {
+                transform: scale(0.96);
+                background: #323236;
+            }
+            .ipad-only-toggle.in-history {
+                background: #172a40;
+                color: #5ac8fa;
+                border-color: #0a84ff;
+            }
+            .tab-wrapper {
+                display: none !important;
+            }
+
+            /* 計算画面: 横切込と縦切込を左右同時表示 */
+            .calc-split-layout {
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 18px;
+                align-items: start;
+                padding-bottom: 24px;
+            }
+            .split-pane,
+            .split-pane.hidden {
+                display: flex !important;
+                flex-direction: column;
+                gap: 12px;
+                background: #141416;
+                border-radius: 20px;
+                padding: 16px;
+                border: 1px solid #2a2a2c;
+            }
+
+            .pane-top-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .pane-header-badge {
+                display: inline-flex;
+                align-items: center;
+                font-size: 14px;
+                font-weight: 700;
+                padding: 4px 12px;
+                border-radius: 8px;
+                width: fit-content;
+            }
+            .badge-side {
+                background: rgba(255, 159, 10, 0.15);
+                color: #ff9f0a;
+                border: 1px solid rgba(255, 159, 10, 0.35);
+            }
+            .badge-height {
+                background: rgba(230, 118, 0, 0.15);
+                color: #ff9f0a;
+                border: 1px solid rgba(230, 118, 0, 0.35);
+            }
+
+            .cell-grid {
+                margin: 0;
+                border-radius: 14px 14px 0 0;
+            }
+            .calc-cell {
+                background: #19191b;
+                padding: 8px 12px;
+                min-height: 64px;
+            }
+            .calc-cell.focused {
+                background: #242428;
+                box-shadow: inset 0 0 0 2.5px var(--ios-orange) !important;
+            }
+            .input-label-left {
+                font-size: 13px;
+                font-weight: 600;
+                color: #d1d1d6;
+                margin-bottom: 2px;
+            }
+            .input-value {
+                font-size: 32px;
+                font-weight: 700;
+                line-height: 1.1;
+            }
+            .input-value-lg { font-size: 34px; }
+
+            /* iPadテンキー（6列 + 9列） */
+            .keypad-container {
+                margin: 0;
+                border-radius: 0 0 14px 14px;
+            }
+            .keypad-row-1 {
+                grid-template-columns: repeat(6, 1fr);
+            }
+            .key-btn {
+                height: 56px;
+                font-size: 22px;
+            }
+            .ipad-key-history {
+                display: flex;
+                background: #172a40;
+                color: #5ac8fa;
+                font-size: 16px;
+                font-weight: 700;
+            }
+            .ipad-key-history:active {
+                background: #223c5b;
+            }
+            .key-btn.gray-control {
+                font-size: 16px;
+                font-weight: 700;
+            }
+            .key-btn.enter-key {
+                background: #3a2612;
+                color: #ff9f0a !important;
+                font-size: 16px;
+                font-weight: 700;
+            }
+            .key-btn.enter-key:active {
+                background: #52361a;
+            }
+            .label-iphone { display: none; }
+            .label-ipad { display: inline; }
+
+            .result-area {
+                padding: 4px 0 0;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .preview-header-row {
+                height: 44px;
+                align-items: center;
+                margin-bottom: 0;
+            }
+            .preview-header-row.placeholder {
+                display: flex;
+                visibility: hidden;
+            }
+            .dir-switch-bar {
+                padding: 3px;
+                border-radius: 10px;
+                border: 1px solid #333;
+            }
+            .dir-button {
+                font-size: 14px;
+                padding: 8px 18px;
+                font-weight: 600;
+                border-radius: 8px;
+            }
+
+            /* 履歴画面: 横履歴と縦履歴を左右同時表示 */
+            .history-view-container {
+                background: transparent;
+                margin: 0;
+                border: none;
+                box-shadow: none;
+                border-radius: 0;
+            }
+            .history-section-content {
+                padding: 0 0 24px;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 18px;
+                align-items: start;
+            }
+            .history-mobile-bar,
+            .history-divider {
+                display: none !important;
+            }
+            .history-cat-section {
+                background: #141416;
+                border-radius: 20px;
+                padding: 16px;
+                border: 1px solid #2a2a2c;
+            }
+            .history-ipad-head {
+                display: flex !important;
+            }
+            .history-mobile-head {
+                display: none !important;
+            }
+            .history-item {
+                background: #242428;
+                border: 1.5px solid #3a3a3c;
+                margin-bottom: 10px;
+                border-radius: 14px;
+                padding: 12px 16px;
+            }
+            .padding-bottom { display: none; }
         }
     </style>
 </head>
 <body id="mainBody">
 
-    <div id="toast">コピーしました</div>
+    <div id="toast">処理が完了しました</div>
 
     <div class="main-container" id="mainApp">
         <!-- ヘッダー -->
         <div class="app-top-bar">
-            <div class="flex items-center gap-3">
-                <span class="title">切込寸法計算 <span class="text-xs font-normal text-[#ff9f0a] border border-[#ff9f0a]/40 rounded-full px-2 py-0.5 ml-2">iPad 11"</span></span>
-            </div>
+            <span class="title">切込寸法</span>
 
-            <!-- 切り替えトグルボタン -->
-            <button id="mainModeToggleBtn" type="button" class="mode-toggle-btn" onclick="toggleMode()">
+            <!-- iPad用 計算/履歴切り替えボタン -->
+            <button id="ipadModeToggleBtn" type="button" class="ipad-only-toggle" onclick="toggleIpadHistory()">
                 <svg id="toggleIconCalc" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 <svg id="toggleIconHistory" class="w-4 h-4 text-[#ff9f0a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span id="toggleButtonText">履歴管理</span>
@@ -356,13 +610,22 @@
 
             <span class="company">KYOWA ROOF</span>
         </div>
-        
-        <!-- 計算画面 -->
+
+        <!-- iPhone用タブバー -->
+        <div class="tab-wrapper">
+            <div class="tab-container">
+                <button id="tabSide" type="button" class="tab-button active" onclick="switchTab('side')">横 切込</button>
+                <button id="tabHeight" type="button" class="tab-button" onclick="switchTab('height')">縦 切込</button>
+                <button id="tabHistory" type="button" class="tab-button" onclick="switchTab('history')">履歴</button>
+            </div>
+        </div>
+
+        <!-- 計算画面（iPhoneはタブ切替 / iPadは左右2ペイン同時表示） -->
         <div id="viewCalc">
             <div class="calc-split-layout">
                 <!-- 左ペイン: 横切込 -->
-                <div class="split-pane">
-                    <div class="flex items-center justify-between">
+                <div id="paneSide" class="split-pane">
+                    <div class="pane-top-header">
                         <span class="pane-header-badge badge-side">横 切込</span>
                         <span class="text-xs text-[#aeaeb2]">働き幅・開口部</span>
                     </div>
@@ -378,27 +641,30 @@
                                 <div id="display-side_l2" class="input-value">0</div>
                             </div>
                             <div class="calc-cell span-2" onclick="focusInput('side_no')">
-                                <span class="input-label-left text-center">横 No.</span>
+                                <span class="input-label-left text-center">No.</span>
                                 <div id="display-side_no" class="input-value">1</div>
                             </div>
                             <div class="calc-cell span-4" onclick="focusInput('side_l1')">
-                                <span class="input-label-left">寸法 (張方向↔対象)</span>
+                                <span class="input-label-left">寸法 (張方向↔︎対象)</span>
                                 <div id="display-side_l1" class="input-value input-value-lg">0</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- 横切込 テンキー -->
-                    <div id="keypadArea" class="keypad-container keypad-left">
-                        <div class="keypad-row row-top">
-                            <button type="button" class="key-btn key-fn history-btn" onclick="toggleMode('history')">履歴</button>
-                            <button type="button" class="key-btn key-fn clear-btn" onclick="pressSideKey('allClear')">AC</button>
-                            <button type="button" class="key-btn" onclick="pressSideKey('00')">00</button>
-                            <button type="button" class="key-btn" onclick="pressSideKey('0')">0</button>
-                            <button type="button" class="key-btn key-fn clear-btn" onclick="pressSideKey('clear')">C</button>
-                            <button type="button" class="key-btn key-fn save-btn" onclick="pressSideKey('enter')">保存</button>
+                    <div id="keypadArea" class="keypad-container">
+                        <div class="keypad-row-1">
+                            <button type="button" class="key-btn ipad-key-history" onclick="toggleIpadHistory(true)">履歴</button>
+                            <button type="button" class="key-btn gray-control text-[1.1rem]" onclick="pressSideKey('allClear')">AC</button>
+                            <button type="button" class="key-btn text-[1.15rem]" onclick="pressSideKey('00')">00</button>
+                            <button type="button" class="key-btn text-[1.25rem]" onclick="pressSideKey('0')">0</button>
+                            <button type="button" class="key-btn gray-control text-[1.15rem]" onclick="pressSideKey('clear')">C</button>
+                            <button type="button" class="key-btn enter-key text-[1.4rem] font-bold" onclick="pressSideKey('enter')">
+                                <span class="label-iphone">⏎</span>
+                                <span class="label-ipad">保存</span>
+                            </button>
                         </div>
-                        <div class="keypad-row row-bottom">
+                        <div class="keypad-row-2">
                             <button type="button" class="key-btn" onclick="pressSideKey('1')">1</button>
                             <button type="button" class="key-btn" onclick="pressSideKey('2')">2</button>
                             <button type="button" class="key-btn" onclick="pressSideKey('3')">3</button>
@@ -411,14 +677,15 @@
                         </div>
                     </div>
 
-                    <div id="resultArea" class="hidden result-area">
+                    <!-- 横切込 結果図面 -->
+                    <div id="resultArea" class="hidden result-area space-y-3 mb-6">
                         <div id="directionToggle" class="preview-header-row">
                             <div class="dir-switch-bar gap-1">
-                                <button type="button" onclick="setCalcDir('LtoR')" id="btnLtoR" class="dir-button dir-active">左←右 (LtoR)</button>
-                                <button type="button" onclick="setCalcDir('RtoL')" id="btnRtoL" class="dir-button">左→右 (RtoL)</button>
+                                <button type="button" onclick="setCalcDir('LtoR')" id="btnLtoR" class="dir-button dir-active">左←右</button>
+                                <button type="button" onclick="setCalcDir('RtoL')" id="btnRtoL" class="dir-button">左→右</button>
                             </div>
                         </div>
-                        <div class="bg-[#000] rounded-2xl border border-[#333] shadow-xl overflow-hidden p-2 relative cursor-pointer" onclick="openZoomModal('svgContainer')">
+                        <div class="bg-[#111] rounded-2xl border border-[#333] shadow-xl overflow-hidden p-1 relative cursor-pointer" onclick="openZoomModal('svgContainer')">
                             <div id="svgContainer" class="w-full bg-[#000] rounded-xl overflow-hidden"></div>
                         </div>
                         <div id="numericResults" class="grid gap-3"></div>
@@ -426,8 +693,8 @@
                 </div>
 
                 <!-- 右ペイン: 縦切込 -->
-                <div class="split-pane">
-                    <div class="flex items-center justify-between">
+                <div id="paneHeight" class="split-pane hidden">
+                    <div class="pane-top-header">
                         <span class="pane-header-badge badge-height">縦 切込</span>
                         <span class="text-xs text-[#aeaeb2]">全長・開口部</span>
                     </div>
@@ -443,7 +710,7 @@
                                 <div id="display-h_l2" class="input-value">0</div>
                             </div>
                             <div class="calc-cell span-2" onclick="focusInput('h_no')">
-                                <span class="input-label-left text-center">縦 No.</span>
+                                <span class="input-label-left text-center">No.</span>
                                 <div id="display-h_no" class="input-value">1</div>
                             </div>
                             <div class="calc-cell span-4" onclick="focusInput('h_l1')">
@@ -454,16 +721,19 @@
                     </div>
 
                     <!-- 縦切込 テンキー -->
-                    <div class="keypad-container keypad-right">
-                        <div class="keypad-row row-top">
-                            <button type="button" class="key-btn key-fn history-btn" onclick="toggleMode('history')">履歴</button>
-                            <button type="button" class="key-btn key-fn clear-btn" onclick="pressHeightKey('allClear')">AC</button>
-                            <button type="button" class="key-btn" onclick="pressHeightKey('00')">00</button>
-                            <button type="button" class="key-btn" onclick="pressHeightKey('0')">0</button>
-                            <button type="button" class="key-btn key-fn clear-btn" onclick="pressHeightKey('clear')">C</button>
-                            <button type="button" class="key-btn key-fn save-btn" onclick="pressHeightKey('enter')">保存</button>
+                    <div class="keypad-container">
+                        <div class="keypad-row-1">
+                            <button type="button" class="key-btn ipad-key-history" onclick="toggleIpadHistory(true)">履歴</button>
+                            <button type="button" class="key-btn gray-control text-[1.1rem]" onclick="pressHeightKey('allClear')">AC</button>
+                            <button type="button" class="key-btn text-[1.15rem]" onclick="pressHeightKey('00')">00</button>
+                            <button type="button" class="key-btn text-[1.25rem]" onclick="pressHeightKey('0')">0</button>
+                            <button type="button" class="key-btn gray-control text-[1.15rem]" onclick="pressHeightKey('clear')">C</button>
+                            <button type="button" class="key-btn enter-key text-[1.4rem] font-bold" onclick="pressHeightKey('enter')">
+                                <span class="label-iphone">⏎</span>
+                                <span class="label-ipad">保存</span>
+                            </button>
                         </div>
-                        <div class="keypad-row row-bottom">
+                        <div class="keypad-row-2">
                             <button type="button" class="key-btn" onclick="pressHeightKey('1')">1</button>
                             <button type="button" class="key-btn" onclick="pressHeightKey('2')">2</button>
                             <button type="button" class="key-btn" onclick="pressHeightKey('3')">3</button>
@@ -476,14 +746,15 @@
                         </div>
                     </div>
 
-                    <div id="heightResultArea" class="hidden result-area">
+                    <!-- 縦切込 結果図面 -->
+                    <div id="heightResultArea" class="hidden result-area space-y-3 mb-6">
                         <div class="preview-header-row placeholder" aria-hidden="true">
                             <div class="dir-switch-bar gap-1">
                                 <button type="button" class="dir-button">左←右</button>
                                 <button type="button" class="dir-button">左→右</button>
                             </div>
                         </div>
-                        <div class="bg-[#000] rounded-2xl border border-[#333] shadow-xl overflow-hidden p-2 relative cursor-pointer" onclick="openZoomModal('heightSvgContainer')">
+                        <div class="bg-[#111] rounded-2xl border border-[#333] shadow-xl overflow-hidden p-1 relative cursor-pointer" onclick="openZoomModal('heightSvgContainer')">
                             <div id="heightSvgContainer" class="w-full bg-[#000] rounded-xl overflow-hidden"></div>
                         </div>
                         <div id="heightNumericResults" class="grid gap-3"></div>
@@ -492,17 +763,35 @@
             </div>
         </div>
 
+        <!-- 履歴画面（iPhoneは縦並び / iPadは左右2ペイン同時表示） -->
         <div id="viewHistory" class="hidden">
-            <div class="history-split-layout">
-                <div class="split-pane">
-                    <div class="history-view-container">
+            <div class="history-view-container">
+                <div class="history-section-content">
+                    <!-- iPhone用共通上段ヘッダー -->
+                    <div class="history-mobile-bar flex items-center justify-between mb-4 p-3 bg-[#1c1c1e] mx-3 rounded-xl border border-[#333]">
+                        <h2 class="history-label-main">計算履歴</h2>
+                        <div class="flex gap-2 items-center">
+                            <button type="button" onclick="switchTab('side')" class="bg-[#3a3a3c] text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-sm">横計算</button>
+                            <button type="button" onclick="switchTab('height')" class="bg-[#3a3a3c] text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-sm">縦計算</button>
+                            <button type="button" onclick="openConfirm('all')" class="bg-[#ff453a] text-white text-[11px] font-bold px-3 py-1.5 rounded-full uppercase shadow-sm">一括削除</button>
+                        </div>
+                    </div>
+
+                    <!-- 左ペイン: 横切込履歴 -->
+                    <div class="history-cat-section section-side">
                         <div id="sideHistoryPreviewContainer" class="mb-4 hidden">
-                            <div class="bg-[#000] rounded-2xl border border-[#333] shadow-xl overflow-hidden p-2 mb-2 relative cursor-pointer" onclick="openZoomModal('sideHistoryPreviewSvg')">
+                            <div class="bg-[#111] rounded-2xl border border-[#333] shadow-xl overflow-hidden p-1 mb-1 relative cursor-pointer" onclick="openZoomModal('sideHistoryPreviewSvg')">
                                 <div id="sideHistoryPreviewSvg" class="w-full bg-[#000] rounded-xl overflow-hidden"></div>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between mb-4 p-3 bg-[#1f1f23] rounded-xl border border-[#333]">
+                        <!-- iPhone用見出し -->
+                        <div class="history-mobile-head flex justify-between items-center mb-3 px-1">
+                            <h3 class="history-label-sub label-side">横切込</h3>
+                            <button type="button" onclick="openConfirm('category', '横')" class="bg-[#3a3a3c] text-white text-[10px] font-bold px-4 py-1.5 rounded-full shadow-sm">削除</button>
+                        </div>
+                        <!-- iPad用見出し -->
+                        <div class="history-ipad-head hidden items-center justify-between mb-4 p-3 bg-[#1f1f23] rounded-xl border border-[#333]">
                             <h2 class="history-label-main flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-[#ff9f0a]"></span>
                                 横 切込履歴
@@ -510,19 +799,26 @@
                             <button type="button" onclick="openConfirm('category', '横')" class="bg-[#3a3a3c] hover:bg-[#4a4a4e] text-white text-xs font-bold px-4 py-2 rounded-lg transition-all">削除</button>
                         </div>
 
-                        <div id="sideHistoryList" class="space-y-3"></div>
+                        <div id="sideHistoryList" class="space-y-2"></div>
                     </div>
-                </div>
 
-                <div class="split-pane">
-                    <div class="history-view-container">
+                    <div class="history-divider border-t border-[#333] my-4 mx-4"></div>
+
+                    <!-- 右ペイン: 縦切込履歴 -->
+                    <div class="history-cat-section section-height">
                         <div id="heightHistoryPreviewContainer" class="mb-4 hidden">
-                            <div class="bg-[#000] rounded-2xl border border-[#333] shadow-xl overflow-hidden p-2 mb-2 relative cursor-pointer" onclick="openZoomModal('heightHistoryPreviewSvg')">
+                            <div class="bg-[#111] rounded-2xl border border-[#333] shadow-xl overflow-hidden p-1 mb-1 relative cursor-pointer" onclick="openZoomModal('heightHistoryPreviewSvg')">
                                 <div id="heightHistoryPreviewSvg" class="w-full bg-[#000] rounded-xl overflow-hidden"></div>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between mb-4 p-3 bg-[#1f1f23] rounded-xl border border-[#333]">
+                        <!-- iPhone用見出し -->
+                        <div class="history-mobile-head flex justify-between items-center mb-3 px-1">
+                            <h3 class="history-label-sub label-height">縦切込</h3>
+                            <button type="button" onclick="openConfirm('category', '縦')" class="bg-[#3a3a3c] text-white text-[10px] font-bold px-4 py-1.5 rounded-full shadow-sm">削除</button>
+                        </div>
+                        <!-- iPad用見出し -->
+                        <div class="history-ipad-head hidden items-center justify-between mb-4 p-3 bg-[#1f1f23] rounded-xl border border-[#333]">
                             <h2 class="history-label-main flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-[#e67600]"></span>
                                 縦 切込履歴
@@ -533,33 +829,36 @@
                             </div>
                         </div>
 
-                        <div id="heightHistoryList" class="space-y-3"></div>
+                        <div id="heightHistoryList" class="space-y-2"></div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div class="padding-bottom"></div>
     </div>
 
-    <div id="customConfirmModal" class="hidden fixed inset-0 flex items-center justify-center p-6" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); z-index: 99999;">
-        <div class="bg-[#1c1c1e] w-full max-w-md rounded-3xl p-8 border border-[#3a3a3c] text-center shadow-2xl">
-            <h4 class="text-xl font-bold text-white mb-4">確認</h4>
-            <p id="confirmMessage" class="text-[#d1d1d6] text-base mb-8 leading-relaxed"></p>
-            <div class="flex gap-4">
-                <button type="button" onclick="document.getElementById('customConfirmModal').classList.add('hidden')" class="flex-1 bg-[#2c2c2e] hover:bg-[#3a3a3c] text-white font-bold py-3.5 rounded-xl transition-all">キャンセル</button>
-                <button type="button" onclick="executeConfirm()" class="flex-1 bg-[#ff453a] hover:bg-[#ff3b30] text-white font-bold py-3.5 rounded-xl transition-all">削除する</button>
+    <!-- 削除確認モーダル -->
+    <div id="customConfirmModal" class="hidden fixed inset-0 flex items-center justify-center p-6" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 99999;">
+        <div class="bg-[#1c1c1e] w-full max-w-sm rounded-3xl p-6 border border-[#3a3a3c] text-center shadow-2xl">
+            <h4 class="text-[18px] font-bold text-white mb-3">確認</h4>
+            <p id="confirmMessage" class="text-[#d1d1d6] text-[14px] mb-6 leading-relaxed"></p>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('customConfirmModal').classList.add('hidden')" class="flex-1 bg-[#2c2c2e] text-white font-bold py-3 rounded-xl">キャンセル</button>
+                <button type="button" onclick="executeConfirm()" class="flex-1 bg-[#ff453a] text-white font-bold py-3 rounded-xl">削除する</button>
             </div>
         </div>
     </div>
 
     <!-- 拡大・ピンチ・回転対応ズームモーダル -->
     <div id="zoomModal" class="hidden fixed inset-0 z-[100000] flex flex-col bg-black transition-opacity">
-        <div class="absolute top-0 left-0 right-0 p-6 flex justify-end items-center z-[100010]">
-            <div class="flex gap-4">
-                <button type="button" class="text-white bg-white/20 hover:bg-white/30 rounded-full p-3 backdrop-blur-md transition-colors" onclick="toggleZoomRotation()">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+        <div class="absolute top-0 left-0 right-0 p-4 md:p-6 flex justify-end items-center z-[100010]">
+            <div class="flex gap-3">
+                <button type="button" class="text-white bg-white/20 hover:bg-white/30 rounded-full p-2.5 backdrop-blur-md transition-colors" onclick="toggleZoomRotation()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                 </button>
-                <button type="button" class="text-white bg-white/20 hover:bg-white/30 rounded-full p-3 backdrop-blur-md transition-colors" onclick="closeZoomModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                <button type="button" class="text-white bg-white/20 hover:bg-white/30 rounded-full p-2.5 backdrop-blur-md transition-colors" onclick="closeZoomModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
         </div>
@@ -569,20 +868,23 @@
     </div>
 
     <script>
-        const STORAGE_KEY_STATE = 'cutting_calc_ipad_state';
-        const STORAGE_KEY_HISTORY = 'cutting_calc_ipad_history';
+        const STORAGE_KEY_STATE = 'cutting_calc_unified_state';
+        const STORAGE_KEY_HISTORY = 'cutting_calc_unified_history';
+        const splitViewQuery = window.matchMedia('(min-width: 768px)');
 
-        let currentMode = 'calc';
+        let currentMode = 'side';      // 'side' | 'height' | 'history'
+        let lastCalcMode = 'side';     // 'side' | 'height'
         let focusedSideInputId = 'side_l1';
         let focusedHeightInputId = 'h_l1';
         let isOverwriteModeSide = true;
         let isOverwriteModeHeight = true;
         let calcDirection = 'LtoR';
         let historyData = [];
-        
+
         let currentSideResult = null;
         let currentHeightResult = null;
-        let activePreviewId = null;
+        let activePreviewSideId = null;
+        let activePreviewHeightId = null;
 
         const inputs = {
             side_a: '', side_l2: '', side_l1: '', side_no: '1',
@@ -591,46 +893,82 @@
 
         function persist() {
             try {
-                localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify({ inputs, currentMode, calcDirection }));
+                localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify({
+                    inputs,
+                    currentMode,
+                    lastCalcMode,
+                    calcDirection
+                }));
                 localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(historyData));
             } catch (e) {
-                console.warn("Storage save failed:", e);
+                console.warn('Storage save skipped:', e);
             }
         }
 
         function hydrate() {
             try {
-                const savedState = localStorage.getItem(STORAGE_KEY_STATE);
+                let savedState = localStorage.getItem(STORAGE_KEY_STATE);
+                let savedHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
+
+                // 旧バージョン（iPhone版・iPad版）からの自動データ引き継ぎ
+                if (!savedState) {
+                    savedState = localStorage.getItem('cutting_calc_v4_state') || localStorage.getItem('cutting_calc_ipad_state');
+                }
+                if (!savedHistory) {
+                    const hIphone = JSON.parse(localStorage.getItem('cutting_calc_v4_history') || '[]');
+                    const hIpad = JSON.parse(localStorage.getItem('cutting_calc_ipad_history') || '[]');
+                    if (hIphone.length > 0 || hIpad.length > 0) {
+                        const map = new Map();
+                        [...hIphone, ...hIpad].forEach(item => {
+                            if (item && item.id) map.set(item.id, item);
+                        });
+                        historyData = Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                    }
+                } else {
+                    historyData = JSON.parse(savedHistory);
+                }
+
                 if (savedState) {
                     const data = JSON.parse(savedState);
                     if (data.inputs) Object.assign(inputs, data.inputs);
-                    currentMode = data.currentMode === 'history' ? 'history' : 'calc';
+                    if (data.lastCalcMode === 'side' || data.lastCalcMode === 'height') {
+                        lastCalcMode = data.lastCalcMode;
+                    }
+                    if (data.currentMode === 'side' || data.currentMode === 'height' || data.currentMode === 'history') {
+                        currentMode = data.currentMode;
+                    } else {
+                        currentMode = lastCalcMode;
+                    }
                     calcDirection = data.calcDirection || 'LtoR';
                 }
-                const savedHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
-                if (savedHistory) {
-                    historyData = JSON.parse(savedHistory);
-                }
             } catch (e) {
-                console.warn("Hydration error:", e);
+                console.warn('Storage read skipped:', e);
             }
-            
+
             updateDisplay();
-            focusedSideInputId = focusedSideInputId || 'side_l1';
-            focusedHeightInputId = focusedHeightInputId || 'h_l1';
-            updateModeUI();
+            updateDirButtonsUI();
+            syncLayoutUI();
             calculate();
             renderHistory();
             updateHistoryCountBadge();
         }
 
-        function toggleMode(targetMode) {
-            if (targetMode) {
-                currentMode = targetMode;
-            } else {
-                currentMode = (currentMode === 'history') ? 'calc' : 'history';
+        function switchTab(mode) {
+            currentMode = mode;
+            if (mode === 'side' || mode === 'height') {
+                lastCalcMode = mode;
             }
-            updateModeUI();
+            syncLayoutUI();
+            persist();
+        }
+
+        function toggleIpadHistory(forceHistory) {
+            if (forceHistory === true) {
+                currentMode = 'history';
+            } else {
+                currentMode = (currentMode === 'history') ? lastCalcMode : 'history';
+            }
+            syncLayoutUI();
             persist();
         }
 
@@ -641,41 +979,64 @@
             }
         }
 
-        function updateModeUI() {
+        function syncLayoutUI() {
+            const isSplit = splitViewQuery.matches;
             const isHistory = (currentMode === 'history');
-            const body = document.getElementById('mainBody');
-            body.classList.toggle('mode-history', isHistory);
+            const activeCalc = isHistory ? lastCalcMode : currentMode;
 
+            const body = document.getElementById('mainBody');
+            body.classList.remove('mode-height', 'mode-history');
+            if (isHistory) {
+                body.classList.add('mode-history');
+            } else if (!isSplit && activeCalc === 'height') {
+                body.classList.add('mode-height');
+            }
+
+            // 計算画面と履歴画面の表示切替
             document.getElementById('viewCalc').classList.toggle('hidden', isHistory);
             document.getElementById('viewHistory').classList.toggle('hidden', !isHistory);
 
-            const btn = document.getElementById('mainModeToggleBtn');
+            // iPhone用3タブ状態更新
+            document.getElementById('tabSide').classList.toggle('active', !isHistory && activeCalc === 'side');
+            document.getElementById('tabHeight').classList.toggle('active', !isHistory && activeCalc === 'height');
+            document.getElementById('tabHistory').classList.toggle('active', isHistory);
+
+            // iPhone時の単一ペイン表示切替（iPadはCSS側で常に両方表示）
+            document.getElementById('paneSide').classList.toggle('hidden', !isSplit && activeCalc !== 'side');
+            document.getElementById('paneHeight').classList.toggle('hidden', !isSplit && activeCalc !== 'height');
+
+            // iPad用ヘッダートグルボタン状態更新
+            const btn = document.getElementById('ipadModeToggleBtn');
             const btnText = document.getElementById('toggleButtonText');
             const iconCalc = document.getElementById('toggleIconCalc');
             const iconHistory = document.getElementById('toggleIconHistory');
             const countBadge = document.getElementById('toggleHistoryCountBadge');
+            if (btn) {
+                if (isHistory) {
+                    btn.classList.add('in-history');
+                    btnText.innerText = '切込計算に戻る';
+                    iconCalc.classList.remove('hidden');
+                    iconHistory.classList.add('hidden');
+                    countBadge.classList.add('hidden');
+                } else {
+                    btn.classList.remove('in-history');
+                    btnText.innerText = '履歴管理';
+                    iconCalc.classList.add('hidden');
+                    iconHistory.classList.remove('hidden');
+                    countBadge.classList.remove('hidden');
+                    updateHistoryCountBadge();
+                }
+            }
 
             if (isHistory) {
-                btn.classList.add('in-history');
-                btnText.innerText = "切込計算に戻る";
-                iconCalc.classList.remove('hidden');
-                iconHistory.classList.add('hidden');
-                countBadge.classList.add('hidden');
                 renderHistory();
                 const firstSide = historyData.find(d => d.mode === '横');
                 const firstHeight = historyData.find(d => d.mode === '縦');
-                if (firstSide) previewHistoryItem(firstSide.id, false);
-                if (firstHeight) previewHistoryItem(firstHeight.id, false);
+                if (firstSide && !activePreviewSideId) previewHistoryItem(firstSide.id, false);
+                if (firstHeight && !activePreviewHeightId) previewHistoryItem(firstHeight.id, false);
             } else {
-                btn.classList.remove('in-history');
-                btnText.innerText = "履歴管理";
-                iconCalc.classList.add('hidden');
-                iconHistory.classList.remove('hidden');
-                countBadge.classList.remove('hidden');
-                updateHistoryCountBadge();
                 refreshFocusedHighlights();
-                calculateSide();
-                calculateHeight();
+                calculate();
             }
         }
 
@@ -683,15 +1044,11 @@
             document.querySelectorAll('.calc-cell').forEach(el => el.classList.remove('focused'));
             const sideEl = document.getElementById('display-' + focusedSideInputId);
             const heightEl = document.getElementById('display-' + focusedHeightInputId);
-            if (sideEl) sideEl.parentElement.classList.add('focused');
-            if (heightEl) heightEl.parentElement.classList.add('focused');
+            if (sideEl && sideEl.parentElement) sideEl.parentElement.classList.add('focused');
+            if (heightEl && heightEl.parentElement) heightEl.parentElement.classList.add('focused');
         }
 
         function focusInput(id) {
-            document.querySelectorAll('.calc-cell').forEach(el => el.classList.remove('focused'));
-            const target = document.getElementById('display-' + id);
-            if (target) target.parentElement.classList.add('focused');
-
             if (id.startsWith('side_')) {
                 focusedSideInputId = id;
                 isOverwriteModeSide = true;
@@ -728,7 +1085,7 @@
                 }
                 return;
             } else {
-                const overwrite = scope === 'side' ? isOverwriteModeSide : isOverwriteModeHeight;
+                const overwrite = (scope === 'side') ? isOverwriteModeSide : isOverwriteModeHeight;
                 if (overwrite) {
                     inputs[targetId] = key;
                     if (scope === 'side') isOverwriteModeSide = false;
@@ -756,7 +1113,7 @@
                 if (el) {
                     const val = inputs[key];
                     el.innerText = val === '' ? '0' : formatNumber(val);
-                    el.style.opacity = val === '' ? '0.35' : '1';
+                    el.style.opacity = val === '' ? '0.3' : '1';
                 }
             }
         }
@@ -774,77 +1131,57 @@
             calculateHeight();
         }
 
+        // 計算式は1文字も変更しない（横切込）
         function calculateSide() {
             const a = parseFloat(inputs.side_a), l2 = parseFloat(inputs.side_l2), l1 = parseFloat(inputs.side_l1);
             const resArea = document.getElementById('resultArea');
-            if (isNaN(l1) || isNaN(l2) || isNaN(a) || a <= 0) { 
-                resArea.classList.add('hidden'); 
+            if (isNaN(l1) || isNaN(l2) || isNaN(a) || a <= 0) {
+                resArea.classList.add('hidden');
                 currentSideResult = null;
-                return; 
+                return;
             }
             let z, y;
             if (calcDirection === 'LtoR') { y = l1 % a; z = (a - ((l1 + l2) % a)) % a; }
             else { z = l1 % a; y = (a - ((l1 + l2) % a)) % a; }
             const fZ = Math.round(z * 10) / 10, fY = Math.round(y * 10) / 10;
             currentSideResult = { mode: '横', no: inputs.side_no || '-', inputs: { a, l2, l1 }, outputs: { z: fZ, y: fY }, calcDir: calcDirection };
-            
-            document.getElementById('numericResults').className = "grid grid-cols-2 gap-4 mt-2";
-            document.getElementById('numericResults').innerHTML = `
-                <div class="bg-[#1f1f23] rounded-2xl py-3 px-4 border border-[#333] text-center shadow-lg">
-                    <p class="text-[14px] font-semibold text-[#d1d1d6] mb-1">左側切込</p>
-                    <p class="text-[42px] font-bold text-[#0a84ff] leading-none">${formatNumber(fZ)}<span class="text-base ml-1.5 font-normal text-[#d1d1d6]">mm</span></p>
-                </div>
-                <div class="bg-[#1f1f23] rounded-2xl py-3 px-4 border border-[#333] text-center shadow-lg">
-                    <p class="text-[14px] font-semibold text-[#d1d1d6] mb-1">右側切込</p>
-                    <p class="text-[42px] font-bold text-[#30d158] leading-none">${formatNumber(fY)}<span class="text-base ml-1.5 font-normal text-[#d1d1d6]">mm</span></p>
-                </div>`;
+
+            document.getElementById('numericResults').className = "grid grid-cols-2 gap-3";
+            document.getElementById('numericResults').innerHTML = `<div class="bg-[#1c1c1e] rounded-2xl py-2 px-4 border border-[#2c2c2e] text-center shadow-lg"><p class="text-[13px] font-medium text-[#d1d1d6] mb-1">左側切込</p><p class="text-[38px] font-semibold text-[#0a84ff] leading-none">${formatNumber(fZ)}<span class="text-sm ml-1 text-[#d1d1d6]">mm</span></p></div><div class="bg-[#1c1c1e] rounded-2xl py-2 px-4 border border-[#2c2c2e] text-center shadow-lg"><p class="text-[13px] font-medium text-[#d1d1d6] mb-1">右側切込</p><p class="text-[38px] font-semibold text-[#30d158] leading-none">${formatNumber(fY)}<span class="text-sm ml-1 text-[#d1d1d6]">mm</span></p></div>`;
             updateSVG('side', l1, l2, a, fZ, fY, calcDirection, 'svgContainer');
             resArea.classList.remove('hidden');
         }
 
+        // 計算式は1文字も変更しない（縦切込）
         function calculateHeight() {
             const t = parseFloat(inputs.h_total), l2 = parseFloat(inputs.h_l2), l1 = parseFloat(inputs.h_l1);
             const resArea = document.getElementById('heightResultArea');
-            if (isNaN(t) || isNaN(l1) || isNaN(l2) || t <= 0) { 
-                resArea.classList.add('hidden'); 
+            if (isNaN(t) || isNaN(l1) || isNaN(l2) || t <= 0) {
+                resArea.classList.add('hidden');
                 currentHeightResult = null;
-                return; 
+                return;
             }
             const rD = l1, rU = l1 + l2, rT = t - rU;
             currentHeightResult = { mode: '縦', no: inputs.h_no || '-', inputs: { total: t, l2, l1 }, outputs: { down: rD, up: rU, top: rT } };
-            
-            document.getElementById('heightNumericResults').className = "grid grid-cols-3 gap-3 mt-2";
-            document.getElementById('heightNumericResults').innerHTML = `
-                <div class="bg-[#1f1f23] rounded-2xl py-3 border border-[#333] text-center shadow-lg">
-                    <p class="text-[13px] font-semibold text-[#d1d1d6] mb-1">下 切込</p>
-                    <p class="text-[32px] font-bold text-white leading-none">${formatNumber(rD)}<span class="text-xs ml-1 font-normal text-[#d1d1d6]">mm</span></p>
-                </div>
-                <div class="bg-[#1f1f23] rounded-2xl py-3 border border-[#333] text-center shadow-lg">
-                    <p class="text-[13px] font-semibold text-[#d1d1d6] mb-1">上 切込</p>
-                    <p class="text-[32px] font-bold text-[#5e5ce6] leading-none">${formatNumber(rU)}<span class="text-xs ml-1 font-normal text-[#d1d1d6]">mm</span></p>
-                </div>
-                <div class="bg-[#1f1f23] rounded-2xl py-3 border border-[#333] text-center shadow-lg">
-                    <p class="text-[13px] font-semibold text-[#d1d1d6] mb-1">上寸法</p>
-                    <p class="text-[32px] font-bold text-[#30d158] leading-none">${formatNumber(Math.round(rT*10)/10)}<span class="text-xs ml-1 font-normal text-[#d1d1d6]">mm</span></p>
-                </div>`;
+
+            document.getElementById('heightNumericResults').className = "grid grid-cols-1 sm:grid-cols-3 gap-3";
+            document.getElementById('heightNumericResults').innerHTML = `<div class="bg-[#1c1c1e] rounded-2xl py-2 border border-[#2c2c2e] text-center shadow-lg"><p class="text-[13px] font-medium text-[#d1d1d6] mb-1">下 切込</p><p class="text-[28px] font-semibold text-white leading-none">${formatNumber(rD)}<span class="text-sm ml-1 text-[#d1d1d6]">mm</span></p></div><div class="bg-[#1c1c1e] rounded-2xl py-2 border border-[#2c2c2e] text-center shadow-lg"><p class="text-[13px] font-medium text-[#d1d1d6] mb-1">上 切込</p><p class="text-[28px] font-semibold text-[#5e5ce6] leading-none">${formatNumber(rU)}<span class="text-sm ml-1 text-[#d1d1d6]">mm</span></p></div><div class="bg-[#1c1c1e] rounded-2xl py-2 border border-[#2c2c2e] text-center shadow-lg"><p class="text-[13px] font-medium text-[#d1d1d6] mb-1">上寸法</p><p class="text-[28px] font-semibold text-[#30d158] leading-none">${formatNumber(Math.round(rT*10)/10)}<span class="text-sm ml-1 text-[#d1d1d6]">mm</span></p></div>`;
             updateSVG('height', t, l2, l1, rU, Math.round(rT*10)/10, null, 'heightSvgContainer');
             resArea.classList.remove('hidden');
         }
 
         function setCalcDir(dir) {
             calcDirection = dir;
-            syncCalcDirUI();
+            updateDirButtonsUI();
             calculate();
             persist();
         }
 
-        function syncCalcDirUI() {
-            const btnL = document.getElementById('btnLtoR');
-            const btnR = document.getElementById('btnRtoL');
-            if (btnL && btnR) {
-                btnL.classList.toggle('dir-active', calcDirection === 'LtoR');
-                btnR.classList.toggle('dir-active', calcDirection === 'RtoL');
-            }
+        function updateDirButtonsUI() {
+            const btnLtoR = document.getElementById('btnLtoR');
+            const btnRtoL = document.getElementById('btnRtoL');
+            if (btnLtoR) btnLtoR.classList.toggle('dir-active', calcDirection === 'LtoR');
+            if (btnRtoL) btnRtoL.classList.toggle('dir-active', calcDirection === 'RtoL');
         }
 
         function saveToHistory(mode) {
@@ -853,11 +1190,11 @@
                 showToast("数値を入力してください");
                 return;
             }
-            const newItem = { 
-                ...targetResult, 
-                id: 'item-' + Date.now() + '-' + Math.floor(Math.random() * 1000), 
-                createdAt: Date.now(), 
-                checked: false 
+            const newItem = {
+                ...targetResult,
+                id: 'item-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                createdAt: Date.now(),
+                checked: false
             };
             historyData.unshift(newItem);
             if (historyData.length > 100) historyData = historyData.filter((d, i) => d.checked || i < 100);
@@ -876,10 +1213,13 @@
 
         function deleteHistoryItem(id) {
             historyData = historyData.filter(d => d.id !== id);
-            if (activePreviewId === id) {
+            if (activePreviewSideId === id) {
                 document.getElementById('sideHistoryPreviewContainer').classList.add('hidden');
+                activePreviewSideId = null;
+            }
+            if (activePreviewHeightId === id) {
                 document.getElementById('heightHistoryPreviewContainer').classList.add('hidden');
-                activePreviewId = null;
+                activePreviewHeightId = null;
             }
             persist();
             renderHistory();
@@ -890,14 +1230,24 @@
         function previewHistoryItem(id, shouldScroll = true) {
             const item = historyData.find(d => d.id === id);
             if (!item) return;
-            activePreviewId = id;
+
             if (item.mode === '横') {
+                activePreviewSideId = id;
+                if (!splitViewQuery.matches) {
+                    activePreviewHeightId = null;
+                    document.getElementById('heightHistoryPreviewContainer').classList.add('hidden');
+                }
                 document.getElementById('sideHistoryPreviewContainer').classList.remove('hidden');
                 updateSVG('side', item.inputs.l1, item.inputs.l2, item.inputs.a, item.outputs.z, item.outputs.y, item.calcDir, 'sideHistoryPreviewSvg');
                 Object.assign(inputs, { side_a: item.inputs.a.toString(), side_l2: item.inputs.l2.toString(), side_l1: item.inputs.l1.toString(), side_no: item.no.toString() });
                 calcDirection = item.calcDir;
-                syncCalcDirUI();
+                updateDirButtonsUI();
             } else {
+                activePreviewHeightId = id;
+                if (!splitViewQuery.matches) {
+                    activePreviewSideId = null;
+                    document.getElementById('sideHistoryPreviewContainer').classList.add('hidden');
+                }
                 document.getElementById('heightHistoryPreviewContainer').classList.remove('hidden');
                 updateSVG('height', item.inputs.total, item.inputs.l2, item.inputs.l1, item.outputs.up, Math.round(item.outputs.top*10)/10, null, 'heightHistoryPreviewSvg');
                 Object.assign(inputs, { h_total: item.inputs.total.toString(), h_l2: item.inputs.l2.toString(), h_l1: item.inputs.l1.toString(), h_no: item.no.toString() });
@@ -911,42 +1261,30 @@
 
         function renderHistory() {
             const sideList = document.getElementById('sideHistoryList'), heightList = document.getElementById('heightHistoryList');
-            if(!sideList || !heightList) return;
+            if (!sideList || !heightList) return;
             const renderItem = item => {
-                const isChecked = item.checked, isPreviewing = item.id === activePreviewId, theme = item.mode === '横' ? '#ff9f0a' : '#e67600';
+                const isChecked = item.checked;
+                const isPreviewing = (item.id === activePreviewSideId || item.id === activePreviewHeightId);
+                const theme = item.mode === '横' ? '#ff9f0a' : '#e67600';
                 const lockedSvg = '<svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>';
-                const unlockedSvg = '<svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H15V7a5 5 0 00-5-5zM8 7a2 2 0 114 0v2H8V7z" /></svg>';
+                const unlockedSvg = '<svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H15V7a5 5 0 00-5-5zM8 7a2 2 0 114 0v2H8V7z" /></svg>';
                 const closeSvg = '<svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>';
-                let res = item.mode === '横' 
-                    ? `<div class="flex justify-around pt-2 border-t border-[#333]"><div class="text-center"><p class="text-[12px] font-semibold text-[#d1d1d6]">左切込</p><p class="text-[28px] font-bold text-[#0a84ff] leading-tight">${formatNumber(item.outputs.z)}<span class="text-xs font-normal ml-1">mm</span></p></div><div class="text-center"><p class="text-[12px] font-semibold text-[#d1d1d6]">右切込</p><p class="text-[28px] font-bold text-[#30d158] leading-tight">${formatNumber(item.outputs.y)}<span class="text-xs font-normal ml-1">mm</span></p></div></div>`
-                    : `<div class="grid grid-cols-3 pt-2 border-t border-[#333]"><div class="text-center"><p class="text-[12px] font-semibold text-[#d1d1d6]">下切</p><p class="text-[24px] font-bold text-white">${formatNumber(item.outputs.down)}</p></div><div class="text-center"><p class="text-[12px] font-semibold text-[#d1d1d6]">上切</p><p class="text-[24px] font-bold text-[#5e5ce6]">${formatNumber(item.outputs.up)}</p></div><div class="text-center"><p class="text-[12px] font-semibold text-[#d1d1d6]">上寸</p><p class="text-[24px] font-bold text-[#30d158]">${formatNumber(item.outputs.top)}</p></div></div>`;
+                let res = item.mode === '横'
+                    ? `<div class="flex justify-around pt-1.5 border-t border-[#2c2c2e]"><div class="text-center"><p class="text-[10px] font-medium text-[#d1d1d6]">左切込</p><p class="text-[22px] font-semibold text-[#0a84ff] leading-none">${formatNumber(item.outputs.z)}</p></div><div class="text-center"><p class="text-[10px] font-medium text-[#d1d1d6]">右切込</p><p class="text-[22px] font-semibold text-[#30d158] leading-none">${formatNumber(item.outputs.y)}</p></div></div>`
+                    : `<div class="grid grid-cols-3 pt-1.5 border-t border-[#2c2c2e]"><div class="text-center"><p class="text-[10px] font-medium text-[#d1d1d6]">下切</p><p class="text-[19px] font-semibold text-white">${formatNumber(item.outputs.down)}</p></div><div class="text-center"><p class="text-[10px] font-medium text-[#d1d1d6]">上切</p><p class="text-[19px] font-semibold text-[#5e5ce6]">${formatNumber(item.outputs.up)}</p></div><div class="text-center"><p class="text-[10px] font-medium text-[#d1d1d6]">上寸</p><p class="text-[19px] font-semibold text-[#30d158]">${formatNumber(item.outputs.top)}</p></div></div>`;
                 const previewClass = isPreviewing ? "preview-active" : "";
-                return `<div class="history-item shadow-lg ${previewClass}" style="border-color: ${isChecked ? theme : ''}" onclick="applyHistoryItem('${item.id}')">
-                    <div class="flex justify-between items-center mb-1">
-                        <div class="flex items-center gap-3">
-                            <button type="button" onclick="event.stopPropagation(); toggleCheck('${item.id}')" style="color: ${isChecked ? theme : '#8e8e93'}">${isChecked ? lockedSvg : unlockedSvg}</button>
-                            <span class="bg-white text-black text-[12px] font-extrabold px-2.5 py-0.5 rounded-full">No.${item.no}</span>
-                            <span class="text-[16px] font-semibold text-white">${item.mode==='横'?'寸法':'下寸'}: ${formatNumber(item.inputs.l1)}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span style="color: ${theme}" class="text-[13px] font-bold uppercase">${item.mode}切込</span>
-                            <button type="button" onclick="event.stopPropagation(); deleteHistoryItem('${item.id}')" class="text-[#8e8e93] bg-[#2c2c2e] hover:bg-[#ff453a] hover:text-white rounded-full p-1.5 transition-all">${closeSvg}</button>
-                        </div>
-                    </div>
-                    ${res}
-                </div>`;
+                return `<div class="history-item py-1.5 px-4 checked shadow-lg ${previewClass}" style="border-color: ${isChecked ? theme : ''}" onclick="applyHistoryItem('${item.id}')"><div class="flex justify-between items-center mb-0.5"><div class="flex items-center gap-2"><button type="button" onclick="event.stopPropagation(); toggleCheck('${item.id}')" style="color: ${isChecked ? theme : '#636366'}">${isChecked ? lockedSvg : unlockedSvg}</button><span class="bg-white text-black text-[11px] font-bold px-2 py-0.5 rounded-full">No.${item.no}</span><span class="text-[15px] font-medium text-white">${item.mode==='横'?'寸法':'下寸'}: ${formatNumber(item.inputs.l1)}</span></div><div class="flex items-center gap-1.5"><span style="color: ${theme}" class="text-[11px] font-medium uppercase">${item.mode}切込</span><button type="button" onclick="event.stopPropagation(); deleteHistoryItem('${item.id}')" class="text-[#636366] bg-[#2c2c2e] rounded-full p-1 active:scale-110 active:bg-[#ff453a] active:text-white transition-all">${closeSvg}</button></div></div>${res}</div>`;
             };
-            sideList.innerHTML = historyData.filter(d => d.mode === '横').map(renderItem).join('') || '<p class="text-center text-[#d1d1d6] opacity-30 py-8 text-sm italic">履歴データはありません</p>';
-            heightList.innerHTML = historyData.filter(d => d.mode === '縦').map(renderItem).join('') || '<p class="text-center text-[#d1d1d6] opacity-30 py-8 text-sm italic">履歴データはありません</p>';
+            sideList.innerHTML = historyData.filter(d => d.mode === '横').map(renderItem).join('') || '<p class="text-center text-[#d1d1d6] opacity-20 py-4 text-xs italic">データなし</p>';
+            heightList.innerHTML = historyData.filter(d => d.mode === '縦').map(renderItem).join('') || '<p class="text-center text-[#d1d1d6] opacity-20 py-4 text-xs italic">データなし</p>';
         }
 
         function openConfirm(action, mode = '') {
             const modal = document.getElementById('customConfirmModal');
             window.pendingAction = { action, mode };
-            const confirmMessage = document.getElementById('confirmMessage');
-            confirmMessage.innerText = action === 'all' 
-                ? "全ての履歴を一括削除しますか？\n（鍵マークの項目は保持されます）" 
-                : `${mode}切込の履歴を削除しますか？\n（鍵マークの項目は保持されます）`;
+            document.getElementById('confirmMessage').innerText = action === 'all'
+                ? "全ての履歴を一括削除しますか？\n（鍵マークの項目は削除されません）"
+                : `${mode}切込の履歴を削除しますか？\n（鍵マークの項目は削除されません）`;
             modal.classList.remove('hidden');
         }
 
@@ -954,20 +1292,24 @@
             const { action, mode } = window.pendingAction;
             const removedIds = new Set(historyData.filter(d => !d.checked && (action === 'all' || d.mode === mode)).map(d => d.id));
             historyData = historyData.filter(d => d.checked || (action !== 'all' && d.mode !== mode));
-            
-            if (activePreviewId && removedIds.has(activePreviewId)) {
+
+            if (activePreviewSideId && removedIds.has(activePreviewSideId)) {
                 document.getElementById('sideHistoryPreviewContainer').classList.add('hidden');
-                document.getElementById('heightHistoryPreviewContainer').classList.add('hidden');
-                activePreviewId = null;
+                activePreviewSideId = null;
             }
-            
+            if (activePreviewHeightId && removedIds.has(activePreviewHeightId)) {
+                document.getElementById('heightHistoryPreviewContainer').classList.add('hidden');
+                activePreviewHeightId = null;
+            }
+
             document.getElementById('customConfirmModal').classList.add('hidden');
             persist();
             renderHistory();
             updateHistoryCountBadge();
-            showToast("削除が完了しました");
+            showToast("削除しました");
         }
 
+        // 図面生成式は1文字も変更しない
         function updateSVG(type, p1, p2, p3, o1, o2, dir, targetId) {
             const container = document.getElementById(targetId);
             if (!container) return;
@@ -985,11 +1327,11 @@
                 while (currentJX < winRE) { if (currentJX > winLE + 1) jointsHtml += `<line x1="${currentJX}" y1="15" x2="${currentJX}" y2="185" stroke="#333333" stroke-width="1" stroke-dasharray="3,3" />`; currentJX += (a * scale); }
                 const jLX = winLE - (zVal * scale), jRX = winRE + (yVal * scale);
                 const dirX = dir === 'LtoR' ? 385 : 15, dirAnchor = dir === 'LtoR' ? 'end' : 'start';
-                container.innerHTML = `<svg viewBox="0 0 400 200" class="w-full h-auto aspect-[2/1]"><rect x="5" y="5" width="390" height="190" fill="none" stroke="#d1d1d6" stroke-width="1" />${jointsHtml}<rect x="${winLE}" y="50" width="${winW}" height="80" fill="#1c1c1e" stroke="#ffffff" stroke-width="2.5" /><text x="${winLE + winW/2}" y="95" text-anchor="middle" font-size="13" fill="#ffffff" font-weight="600">開口部</text><line x1="${winLE}" y1="155" x2="${jLX}" y2="155" stroke="#0a84ff" stroke-width="3" /><circle cx="${winLE}" cy="155" r="2.5" fill="#0a84ff" /><text x="${(winLE + jLX)/2}" y="182" text-anchor="middle" font-size="${zVal > 999 ? 20 : 26}" fill="#0a84ff" font-weight="600">${formatNumber(zVal)}</text><line x1="${winRE}" y1="155" x2="${jRX}" y2="155" stroke="#30d158" stroke-width="3" /><circle cx="${winRE}" cy="155" r="2.5" fill="#30d158" /><text x="${(winRE + jRX)/2}" y="182" text-anchor="middle" font-size="${yVal > 999 ? 20 : 26}" fill="#30d158" font-weight="600">${formatNumber(yVal)}</text><text x="${dirX}" y="30" text-anchor="${dirAnchor}" font-size="11" fill="#ff9f0a" font-weight="500">${dir === 'LtoR' ? '← 張出方向' : '張出方向 →'}</text><text x="${dirX}" y="95" text-anchor="${dirAnchor}" font-size="16" fill="#ffffff" font-weight="600">L1:${formatNumber(l1)}</text></svg>`;
+                container.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" class="w-full h-full"><rect x="5" y="5" width="390" height="190" fill="none" stroke="#d1d1d6" stroke-width="1" />${jointsHtml}<rect x="${winLE}" y="50" width="${winW}" height="80" fill="#1c1c1e" stroke="#ffffff" stroke-width="2.5" /><text x="${winLE + winW/2}" y="95" text-anchor="middle" font-size="13" fill="#ffffff" font-weight="600">開口部</text><line x1="${winLE}" y1="155" x2="${jLX}" y2="155" stroke="#0a84ff" stroke-width="3" /><circle cx="${winLE}" cy="155" r="2.5" fill="#0a84ff" /><text x="${(winLE + jLX)/2}" y="182" text-anchor="middle" font-size="${zVal > 999 ? 20 : 26}" fill="#0a84ff" font-weight="600">${formatNumber(zVal)}</text><line x1="${winRE}" y1="155" x2="${jRX}" y2="155" stroke="#30d158" stroke-width="3" /><circle cx="${winRE}" cy="155" r="2.5" fill="#30d158" /><text x="${(winRE + jRX)/2}" y="182" text-anchor="middle" font-size="${yVal > 999 ? 20 : 26}" fill="#30d158" font-weight="600">${formatNumber(yVal)}</text><text x="${dirX}" y="30" text-anchor="${dirAnchor}" font-size="11" fill="#ff9f0a" font-weight="500">${dir === 'LtoR' ? '← 張出方向' : '張出方向 →'}</text><text x="${dirX}" y="95" text-anchor="${dirAnchor}" font-size="16" fill="#ffffff" font-weight="600">L1:${formatNumber(l1)}</text></svg>`;
             } else {
                 const total = p1, l2 = p2, l1 = p3, rUp = o1, rTop = o2;
                 const hS = 160 / total, wB = 185, wT = 25, winYB = wB - (l1 * hS), winH = l2 * hS, winYT = winYB - winH;
-                container.innerHTML = `<svg viewBox="0 0 400 210" class="w-full h-auto aspect-[400/210]"><rect x="150" y="${wT}" width="100" height="${wB - wT}" fill="none" stroke="#d1d1d6" stroke-width="2" /><rect x="160" y="${winYT}" width="80" height="${winH}" fill="#1c1c1e" stroke="#ffffff" stroke-width="2.5" /><text x="200" y="${winYT + winH/2 + 5}" text-anchor="middle" font-size="13" fill="#ffffff" font-weight="600">開口部</text><text x="200" y="${winYB + 25}" text-anchor="middle" font-size="16" fill="#ffffff" font-weight="600">H:${formatNumber(l1)}</text><line x1="130" y1="${wB}" x2="130" y2="${winYB}" stroke="#ffffff" stroke-width="3" /><text x="120" y="${(wB + winYB)/2 + 8}" text-anchor="end" font-size="28" fill="#ffffff" font-weight="600">${formatNumber(l1)}</text><line x1="270" y1="${wB}" x2="270" y2="${winYT}" stroke="#5e5ce6" stroke-width="3" /><text x="280" y="${(wB + winYT)/2 + 8}" text-anchor="start" font-size="28" fill="#5e5ce6" font-weight="600">${formatNumber(rUp)}</text><line x1="130" y1="${winYT}" x2="130" y2="${wT}" stroke="#30d158" stroke-width="3" /><text x="120" y="${(winYT + wT)/2 + 8}" text-anchor="end" font-size="28" font-weight="600" style="fill: #30d158;">${formatNumber(rTop)}</text><text x="150" y="${wB + 15}" font-size="10" fill="#d1d1d6" font-weight="500">下端 0</text></svg>`;
+                container.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 210" class="w-full h-full"><rect x="150" y="${wT}" width="100" height="${wB - wT}" fill="none" stroke="#d1d1d6" stroke-width="2" /><rect x="160" y="${winYT}" width="80" height="${winH}" fill="#1c1c1e" stroke="#ffffff" stroke-width="2.5" /><text x="200" y="${winYT + winH/2 + 5}" text-anchor="middle" font-size="13" fill="#ffffff" font-weight="600">開口部</text><text x="200" y="${winYB + 25}" text-anchor="middle" font-size="16" fill="#ffffff" font-weight="600">H:${formatNumber(l1)}</text><line x1="130" y1="${wB}" x2="130" y2="${winYB}" stroke="#ffffff" stroke-width="3" /><text x="120" y="${(wB + winYB)/2 + 8}" text-anchor="end" font-size="28" fill="#ffffff" font-weight="600">${formatNumber(l1)}</text><line x1="270" y1="${wB}" x2="270" y2="${winYT}" stroke="#5e5ce6" stroke-width="3" /><text x="280" y="${(wB + winYT)/2 + 8}" text-anchor="start" font-size="28" fill="#5e5ce6" font-weight="600">${formatNumber(rUp)}</text><line x1="130" y1="${winYT}" x2="130" y2="${wT}" stroke="#30d158" stroke-width="3" /><text x="120" y="${(winYT + wT)/2 + 8}" text-anchor="end" font-size="28" font-weight="600" style="fill: #30d158;">${formatNumber(rTop)}</text><text x="150" y="${wB + 15}" font-size="10" fill="#d1d1d6" font-weight="500">下端 0</text></svg>`;
             }
         }
 
@@ -1012,7 +1354,7 @@
 
             const zoomImg = document.getElementById('zoomImg');
             zoomImg.src = svgUrl;
-            
+
             zoomState = { scale: 1, x: 0, y: 0, rotation: 0 };
             updateZoomTransform();
 
@@ -1032,7 +1374,7 @@
             zoomState.rotation = (zoomState.rotation === 0) ? 90 : 0;
             zoomState.x = 0;
             zoomState.y = 0;
-            
+
             if (zoomState.rotation === 90) {
                 const vW = window.innerWidth;
                 const vH = window.innerHeight;
@@ -1043,7 +1385,7 @@
             } else {
                 zoomState.scale = 1;
             }
-            
+
             zoomImg.style.transition = 'transform 0.3s ease-in-out';
             updateZoomTransform();
             setTimeout(() => { zoomImg.style.transition = 'none'; }, 300);
@@ -1101,9 +1443,53 @@
             });
         });
 
-        window.onload = () => { hydrate(); refreshFocusedHighlights(); };
-    </script>
-    <script>
+        /* iPhone用横スワイプタブ切り替え（iPadでは無効） */
+        let touchStartXPoint = 0;
+        let touchStartYPoint = 0;
+
+        document.addEventListener('touchstart', e => {
+            if (splitViewQuery.matches || e.target.closest('.keypad-container')) {
+                touchStartXPoint = 0;
+                touchStartYPoint = 0;
+                return;
+            }
+            touchStartXPoint = e.changedTouches[0].screenX;
+            touchStartYPoint = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        document.addEventListener('touchend', e => {
+            if (splitViewQuery.matches || (touchStartXPoint === 0 && touchStartYPoint === 0)) return;
+
+            const touchEndX = e.changedTouches[0].screenX;
+            const touchEndY = e.changedTouches[0].screenY;
+            const diffX = touchEndX - touchStartXPoint;
+            const diffY = touchEndY - touchStartYPoint;
+
+            touchStartXPoint = 0;
+            touchStartYPoint = 0;
+
+            if (!document.getElementById('zoomModal').classList.contains('hidden')) return;
+            if (!document.getElementById('customConfirmModal').classList.contains('hidden')) return;
+            if (e.target.closest('.keypad-container')) return;
+
+            if (Math.abs(diffY) < 60 && Math.abs(diffX) > 80) {
+                const tabs = ['side', 'height', 'history'];
+                const idx = tabs.indexOf(currentMode);
+                if (diffX > 0 && idx > 0) switchTab(tabs[idx - 1]);
+                else if (diffX < 0 && idx < tabs.length - 1) switchTab(tabs[idx + 1]);
+            }
+        }, { passive: true });
+
+        if (splitViewQuery.addEventListener) splitViewQuery.addEventListener('change', syncLayoutUI);
+        else splitViewQuery.addListener(syncLayoutUI);
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', hydrate);
+        } else {
+            hydrate();
+        }
+
+        // Service Workerの登録と更新検知
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const isSupportedProtocol = window.location.protocol === 'https:' || window.location.protocol === 'http:';
@@ -1111,11 +1497,27 @@
 
                 if (isSupportedProtocol && !isBlobOrData) {
                     try {
-                        const swUrl = new URL('./sw.js', window.location.href).href;
-                        navigator.serviceWorker.register(swUrl).then((registration) => {
-                            console.log('ServiceWorker registered:', registration.scope);
-                        }).catch(() => {});
+                        navigator.serviceWorker.register('./sw.js')
+                            .then(registration => {
+                                registration.addEventListener('updatefound', () => {
+                                    const newWorker = registration.installing;
+                                    newWorker.addEventListener('statechange', () => {
+                                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                            newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                        }
+                                    });
+                                });
+                            })
+                            .catch(() => {});
                     } catch (e) {}
+                }
+            });
+
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    refreshing = true;
+                    window.location.reload();
                 }
             });
         }
